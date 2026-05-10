@@ -50,7 +50,7 @@ type State = {
   peek: "none" | Color;
   pendingPromotion: PendingPromotion | null;
   enPassantTarget: Square | null;
-  lastMove: { from?: Square; to?: Square; kind: Move["kind"] } | null;
+  lastMove: { from?: Square; to?: Square; kind: Move["kind"]; status?: string } | null;
 };
 
 type WorkerRequest = {
@@ -1714,7 +1714,7 @@ export default function App() {
       winner: null,
       pendingPromotion: null,
       selected: null,
-      status: fallbackStatus || game.result || `${game.turn} to move`,
+      status: fallbackStatus || game.result || (game.last_move_json as any)?.status || s.status || "White to move",
     }));
   }
 
@@ -1815,7 +1815,7 @@ export default function App() {
       turn: next.turn,
       quietus_json: next.quietus,
       secrets_json: next.secrets,
-      last_move_json: next.lastMove,
+      last_move_json: next.lastMove ? { ...next.lastMove, status: next.status } : next.lastMove,
       result: next.result,
       status: next.result ? "finished" : "active",
       updated_at: new Date().toISOString(),

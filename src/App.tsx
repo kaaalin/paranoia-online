@@ -1619,6 +1619,7 @@ export default function App() {
   const [onlineGame, setOnlineGame] = useState<{ gameId: string; playerId: string; playerColor: Color; inviteLink: string; status: "waiting" | "active" } | null>(null);
   const workerRef = useRef<Worker | null>(null);
   const pendingRequestIdRef = useRef(0);
+  const savingOnlineRef = useRef(false);
 
   useEffect(() => {
     runSelfTests();
@@ -1805,9 +1806,11 @@ export default function App() {
   }
 
   async function saveOnlineState(next: State) {
-    if (!supabase || !onlineGame) return;
+    if (!supabaseConfigured || !onlineGame) return;
 
-    const { error } = await supabaseUpdateGame(onlineGame.gameId, {
+    savingOnlineRef.current = true;
+
+    const { data, error } = await supabaseUpdateGame(onlineGame.gameId, {
       board_json: next.board,
       turn: next.turn,
       quietus_json: next.quietus,
@@ -1820,7 +1823,15 @@ export default function App() {
 
     if (error) {
       setState((s) => ({ ...s, status: `Could not send online move: ${error.message}` }));
+      savingOnlineRef.current = false;
+      return;
     }
+
+    if (data) {
+      applyGameRowToState(data as GameRow);
+    }
+
+    savingOnlineRef.current = false;
   }
 
   async function applyOnlineMove(move: Move) {
@@ -1844,6 +1855,7 @@ export default function App() {
     let cancelled = false;
 
     async function pollGame() {
+      if (savingOnlineRef.current) return;
       const { data: game } = await supabaseGetGame(onlineGame!.gameId);
       if (cancelled || !game) return;
       const row = game as GameRow;

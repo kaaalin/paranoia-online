@@ -1693,7 +1693,7 @@ export default function App() {
     setPurgeChoice(null);
     setPeekConfirm(null);
     setOnlineGame(null);
-    if (typeof window !== "undefined" && window.location.pathname.startsWith("/game/")) {
+    if (typeof window !== "undefined" && (window.location.pathname.startsWith("/game/") || window.location.search.includes("game="))) {
       window.history.pushState({}, "", "/");
     }
     setState(initialState());
@@ -1727,7 +1727,7 @@ export default function App() {
     const playerId = `player_${Math.random().toString(36).slice(2, 10)}`;
     const start = initialState();
     const baseUrl = typeof window !== "undefined" ? window.location.origin : "";
-    const inviteLink = `${baseUrl}/game/${gameId}`;
+    const inviteLink = `${baseUrl}/?game=${gameId}`;
 
     const { error } = await supabaseInsertGame({
       id: gameId,
@@ -1751,7 +1751,7 @@ export default function App() {
     setState({ ...start, mode: "online", status: `Created online game ${gameId}` });
 
     if (typeof window !== "undefined") {
-      window.history.pushState({}, "", `/game/${gameId}`);
+      window.history.pushState({}, "", `/?game=${gameId}`);
     }
   }
 
@@ -1797,7 +1797,7 @@ export default function App() {
       gameId: cleanGameId,
       playerId: joinedPlayerId,
       playerColor: joinedColor,
-      inviteLink: `${baseUrl}/game/${cleanGameId}`,
+      inviteLink: `${baseUrl}/?game=${cleanGameId}`,
       status: game.status === "finished" ? "active" : game.status,
     });
 
@@ -1831,9 +1831,11 @@ export default function App() {
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const match = window.location.pathname.match(/^\/game\/([^/]+)$/);
-    if (!match) return;
-    joinOnlineGame(match[1]);
+    const pathMatch = window.location.pathname.match(/^\/game\/([^/]+)$/);
+    const queryGameId = new URLSearchParams(window.location.search).get("game");
+    const gameId = pathMatch?.[1] || queryGameId;
+    if (!gameId) return;
+    joinOnlineGame(gameId);
   }, []);
 
   useEffect(() => {

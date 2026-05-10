@@ -1,5 +1,4 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { createClient } from "@supabase/supabase-js";
 
 type Color = "white" | "black";
 type PieceType = "K" | "Q" | "R" | "B" | "N" | "P";
@@ -46,7 +45,7 @@ type State = {
   status: string;
   winner: Color | null;
   result: string | null;
-  showInfo: boolean;
+  showRules: boolean;
   secrets: { white: SecretInfo; black: SecretInfo };
   peek: "none" | Color;
   pendingPromotion: PendingPromotion | null;
@@ -89,7 +88,49 @@ const LOGO_SRC = "/logo-paranoia.svg";
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string | undefined;
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined;
-const supabase = SUPABASE_URL && SUPABASE_ANON_KEY ? createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
+const supabaseConfigured = Boolean(SUPABASE_URL && SUPABASE_ANON_KEY);
+
+function supabaseHeaders(extra?: Record<string, string>) {
+  return {
+    apikey: SUPABASE_ANON_KEY || "",
+    Authorization: `Bearer ${SUPABASE_ANON_KEY || ""}`,
+    "Content-Type": "application/json",
+    ...extra,
+  };
+}
+
+async function supabaseInsertGame(row: Partial<GameRow>) {
+  if (!SUPABASE_URL) return { error: { message: "Supabase URL is missing" } };
+  const response = await fetch(`${SUPABASE_URL}/rest/v1/games`, {
+    method: "POST",
+    headers: supabaseHeaders({ Prefer: "return=minimal" }),
+    body: JSON.stringify(row),
+  });
+  if (!response.ok) return { error: { message: await response.text() } };
+  return { error: null };
+}
+
+async function supabaseGetGame(gameId: string) {
+  if (!SUPABASE_URL) return { data: null, error: { message: "Supabase URL is missing" } };
+  const response = await fetch(`${SUPABASE_URL}/rest/v1/games?id=eq.${encodeURIComponent(gameId)}&select=*`, {
+    headers: supabaseHeaders(),
+  });
+  if (!response.ok) return { data: null, error: { message: await response.text() } };
+  const rows = await response.json();
+  return { data: rows?.[0] || null, error: null };
+}
+
+async function supabaseUpdateGame(gameId: string, patch: Partial<GameRow>) {
+  if (!SUPABASE_URL) return { data: null, error: { message: "Supabase URL is missing" } };
+  const response = await fetch(`${SUPABASE_URL}/rest/v1/games?id=eq.${encodeURIComponent(gameId)}`, {
+    method: "PATCH",
+    headers: supabaseHeaders({ Prefer: "return=representation" }),
+    body: JSON.stringify(patch),
+  });
+  if (!response.ok) return { data: null, error: { message: await response.text() } };
+  const rows = await response.json();
+  return { data: rows?.[0] || null, error: null };
+}
 
 type GameRow = {
   id: string;
@@ -102,6 +143,8 @@ type GameRow = {
   secrets_json: { white: SecretInfo; black: SecretInfo };
   last_move_json: State["lastMove"];
   result: string | null;
+  created_at?: string;
+  updated_at?: string;
 };
 
 const other = (c: Color): Color => (c === "white" ? "black" : "white");
@@ -1667,7 +1710,7 @@ export default function App() {
   }
 
   async function createOnlineGame() {
-    if (!supabase) {
+    if (!supabaseConfigured) {
       setState((s) => ({ ...s, mode: "online", status: "Supabase is not configured" }));
       return;
     }
@@ -1678,7 +1721,7 @@ export default function App() {
     const baseUrl = typeof window !== "undefined" ? window.location.origin : "";
     const inviteLink = `${baseUrl}/game/${gameId}`;
 
-    const { error } = await supabase.from("games").insert({
+    const { error } = await supabaseInsertGame({
       id: gameId,
       status: "waiting",
       white_player_id: playerId,
@@ -1705,7 +1748,7 @@ export default function App() {
   }
 
   async function joinOnlineGame(gameId: string) {
-    if (!supabase) {
+    if (!supabaseConfigured) {
       setState((s) => ({ ...s, mode: "online", status: "Supabase is not configured" }));
       return;
     }
@@ -1714,11 +1757,7 @@ export default function App() {
     const playerId = `player_${Math.random().toString(36).slice(2, 10)}`;
     const baseUrl = typeof window !== "undefined" ? window.location.origin : "";
 
-    const { data: existingGame, error } = await supabase
-      .from("games")
-      .select("*")
-      .eq("id", cleanGameId)
-      .single();
+    const { data: existingGame, error } = await supabaseGetGame(cleanGameId);
 
     if (error || !existingGame) {
       setState((s) => ({ ...s, mode: "online", status: "Online game not found" }));
@@ -1731,16 +1770,11 @@ export default function App() {
 
     if (!game.black_player_id && game.white_player_id !== playerId) {
       joinedColor = "black";
-      const { data: joinedGame, error: joinError } = await supabase
-        .from("games")
-        .update({
-          black_player_id: playerId,
-          status: "active",
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", cleanGameId)
-        .select("*")
-        .single();
+      const { data: joinedGame, error: joinError } = await supabaseUpdateGame(cleanGameId, {
+        black_player_id: playerId,
+        status: "active",
+        updated_at: new Date().toISOString(),
+      });
 
       if (!joinError && joinedGame) game = joinedGame as GameRow;
     } else if (game.white_player_id === playerId) {
@@ -1765,19 +1799,16 @@ export default function App() {
   async function saveOnlineState(next: State) {
     if (!supabase || !onlineGame) return;
 
-    const { error } = await supabase
-      .from("games")
-      .update({
-        board_json: next.board,
-        turn: next.turn,
-        quietus_json: next.quietus,
-        secrets_json: next.secrets,
-        last_move_json: next.lastMove,
-        result: next.result,
-        status: next.result ? "finished" : "active",
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", onlineGame.gameId);
+    const { error } = await supabaseUpdateGame(onlineGame.gameId, {
+      board_json: next.board,
+      turn: next.turn,
+      quietus_json: next.quietus,
+      secrets_json: next.secrets,
+      last_move_json: next.lastMove,
+      result: next.result,
+      status: next.result ? "finished" : "active",
+      updated_at: new Date().toISOString(),
+    });
 
     if (error) {
       setState((s) => ({ ...s, status: `Could not send online move: ${error.message}` }));
@@ -1798,31 +1829,29 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    if (!supabase || !onlineGame?.gameId) return;
+    if (!supabaseConfigured || !onlineGame?.gameId) return;
 
-    const channel = supabase
-      .channel(`game-${onlineGame.gameId}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "UPDATE",
-          schema: "public",
-          table: "games",
-          filter: `id=eq.${onlineGame.gameId}`,
-        },
-        (payload) => {
-          const game = payload.new as GameRow;
-          setOnlineGame((current) => current ? {
-            ...current,
-            status: game.status === "finished" ? "active" : game.status,
-          } : current);
-          applyGameRowToState(game);
-        },
-      )
-      .subscribe();
+    let cancelled = false;
+
+    async function pollGame() {
+      const { data: game } = await supabaseGetGame(onlineGame!.gameId);
+      if (cancelled || !game) return;
+      const row = game as GameRow;
+      setOnlineGame((current) => current ? {
+        ...current,
+        status: row.status === "finished" ? "active" : row.status,
+      } : current);
+      applyGameRowToState(row);
+    }
+
+    void pollGame();
+    const interval = window.setInterval(() => {
+      void pollGame();
+    }, 1200);
 
     return () => {
-      supabase.removeChannel(channel);
+      cancelled = true;
+      window.clearInterval(interval);
     };
   }, [onlineGame?.gameId]);
 

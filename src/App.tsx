@@ -3,7 +3,7 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 type Color = "white" | "black";
 type PieceType = "K" | "Q" | "R" | "B" | "N" | "P";
 type Difficulty = "Easy" | "Medium" | "Hard";
-type Mode = "human" | "cpu";
+type Mode = "human" | "online" | "cpu";
 type Square = `${"a" | "b" | "c" | "d" | "e" | "f" | "g" | "h"}${1 | 2 | 3 | 4 | 5 | 6 | 7 | 8}`;
 
 type Piece = {
@@ -1547,6 +1547,7 @@ export default function App() {
   const [state, setState] = useState<State>(initialState);
   const [purgeChoice, setPurgeChoice] = useState<{ from: Square; to: Square; move: Move } | null>(null);
   const [peekConfirm, setPeekConfirm] = useState<Color | null>(null);
+  const [onlineGame, setOnlineGame] = useState<{ gameId: string; playerId: string; inviteLink: string; status: "waiting" | "active" } | null>(null);
   const workerRef = useRef<Worker | null>(null);
   const pendingRequestIdRef = useRef(0);
 
@@ -1622,8 +1623,57 @@ export default function App() {
     pendingRequestIdRef.current += 1;
     setPurgeChoice(null);
     setPeekConfirm(null);
+    setOnlineGame(null);
+    if (typeof window !== "undefined" && window.location.pathname.startsWith("/game/")) {
+      window.history.pushState({}, "", "/");
+    }
     setState(initialState());
   }
+
+  function createOnlineGameStub() {
+    const gameId = Math.random().toString(36).slice(2, 8).toUpperCase();
+    const playerId = `player_${Math.random().toString(36).slice(2, 10)}`;
+    const baseUrl = typeof window !== "undefined" ? window.location.origin : "";
+    const inviteLink = `${baseUrl}/game/${gameId}`;
+
+    setOnlineGame({
+      gameId,
+      playerId,
+      inviteLink,
+      status: "waiting",
+    });
+
+    if (typeof window !== "undefined") {
+      window.history.pushState({}, "", `/game/${gameId}`);
+    }
+  }
+
+  function joinOnlineGameStub(gameId: string) {
+    const cleanGameId = gameId.trim().toUpperCase();
+    const playerId = `player_${Math.random().toString(36).slice(2, 10)}`;
+    const baseUrl = typeof window !== "undefined" ? window.location.origin : "";
+
+    setState((s) => ({
+      ...s,
+      mode: "online",
+      flipped: false,
+      status: `Joined online game ${cleanGameId}`,
+    }));
+
+    setOnlineGame({
+      gameId: cleanGameId,
+      playerId,
+      inviteLink: `${baseUrl}/game/${cleanGameId}`,
+      status: "active",
+    });
+  }
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const match = window.location.pathname.match(/^\/game\/([^/]+)$/);
+    if (!match) return;
+    joinOnlineGameStub(match[1]);
+  }, []);
 
   function handleClick(sq: Square) {
     if (state.winner || state.pendingPromotion || purgeChoice) return;
@@ -1925,26 +1975,27 @@ export default function App() {
                 <CustomDropdown<Mode>
                   compact
                   value={state.mode}
-                  widthLabels={["With Human", "With Computer"]}
+                  widthLabels={["With Human", "Online Human", "With Computer"]}
                   options={[
                     { value: "human", label: "With Human" },
+                    { value: "online", label: "Online Human" },
                     { value: "cpu", label: "With Computer" },
                   ]}
                   onChange={(mode) => setState((s) => ({ ...s, mode }))}
                 />
               </label>
               <label className="flex flex-col gap-0.5 text-[13px]">
-                <span>{state.mode === "human" ? "Bottom color" : "Computer plays"}</span>
+                <span>{state.mode === "human" ? "Bottom color" : state.mode === "online" ? "You play" : "Computer plays"}</span>
                 <CustomDropdown<Color>
                   compact
-                  value={state.mode === "human" ? bottomColor : state.cpuColor}
+                  value={state.mode === "human" || state.mode === "online" ? bottomColor : state.cpuColor}
                   widthLabels={["White", "Black"]}
                   options={[
                     { value: "white", label: "White" },
                     { value: "black", label: "Black" },
                   ]}
                   onChange={(color) => {
-                    if (state.mode === "human") setBottomColor(color);
+                    if (state.mode === "human" || state.mode === "online") setBottomColor(color);
                     else setState((s) => ({ ...s, cpuColor: color }));
                   }}
                 />
@@ -1953,12 +2004,14 @@ export default function App() {
                 <span>Level</span>
                 <CustomDropdown<string>
                   compact
-                  disabled={state.mode === "human"}
-                  value={state.mode === "human" ? "Human" : state.difficulty}
-                  widthLabels={["Human", "Easy", "Medium", "Hard"]}
+                  disabled={state.mode !== "cpu"}
+                  value={state.mode === "human" ? "Human" : state.mode === "online" ? "Online" : state.difficulty}
+                  widthLabels={["Human", "Online", "Easy", "Medium", "Hard"]}
                   options={state.mode === "human"
                     ? [{ value: "Human", label: "Human" }]
-                    : [
+                    : state.mode === "online"
+                      ? [{ value: "Online", label: "Online" }]
+                      : [
                         { value: "Easy", label: "Easy" },
                         { value: "Medium", label: "Medium" },
                         { value: "Hard", label: "Hard" },
@@ -1966,6 +2019,26 @@ export default function App() {
                   onChange={(difficulty) => setState((s) => ({ ...s, difficulty: difficulty as Difficulty }))}
                 />
               </label>
+              {state.mode === "online" && (
+                <div className="mt-2 rounded-2xl p-2 text-[12px]" style={{ background: "#ede7df", border: `1px solid ${BORDER}`, color: TEXT }}>
+                  {!onlineGame ? (
+                    <button
+                      type="button"
+                      onClick={createOnlineGameStub}
+                      className="w-full py-2 rounded-2xl transition-all duration-150 hover:opacity-80"
+                      style={{ background: "#ffffff", color: TEXT, border: `1px solid ${BORDER}` }}
+                    >
+                      Create invite link
+                    </button>
+                  ) : (
+                    <div className="space-y-1">
+                      <div>Status: {onlineGame.status === "waiting" ? "waiting for opponent" : "joined room"}</div>
+                      <div>Game: {onlineGame.gameId}</div>
+                      <div className="break-all opacity-80">{onlineGame.inviteLink}</div>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             <div className="rounded-3xl p-3 border space-y-3" style={{ background: PANEL, borderColor: BORDER }}>
@@ -2117,30 +2190,31 @@ export default function App() {
             </div>
 
             <div className="rounded-3xl p-4 border space-y-3" style={{ background: PANEL, borderColor: BORDER }}>
-              <div className="text-lg font-semibold">Computer opponent</div>
+              <div className="text-lg font-semibold">{state.mode === "online" ? "Online opponent" : "Computer opponent"}</div>
               <label className="flex items-center justify-between gap-3 text-sm">
                 <span>Mode</span>
                 <CustomDropdown<Mode>
                   value={state.mode}
-                  widthLabels={["Human vs Human", "Human vs Computer"]}
+                  widthLabels={["Human vs Human", "Online Human", "Human vs Computer"]}
                   options={[
                     { value: "human", label: "Human vs Human" },
+                    { value: "online", label: "Online Human" },
                     { value: "cpu", label: "Human vs Computer" },
                   ]}
                   onChange={(mode) => setState((s) => ({ ...s, mode }))}
                 />
               </label>
               <label className="flex items-center justify-between gap-3 text-sm">
-                <span>{state.mode === "human" ? "Bottom color" : "Computer plays"}</span>
+                <span>{state.mode === "human" ? "Bottom color" : state.mode === "online" ? "You play" : "Computer plays"}</span>
                 <CustomDropdown<Color>
-                  value={state.mode === "human" ? bottomColor : state.cpuColor}
+                  value={state.mode === "human" || state.mode === "online" ? bottomColor : state.cpuColor}
                   widthLabels={["White", "Black"]}
                   options={[
                     { value: "white", label: "White" },
                     { value: "black", label: "Black" },
                   ]}
                   onChange={(color) => {
-                    if (state.mode === "human") setBottomColor(color);
+                    if (state.mode === "human" || state.mode === "online") setBottomColor(color);
                     else setState((s) => ({ ...s, cpuColor: color }));
                   }}
                 />
@@ -2148,12 +2222,14 @@ export default function App() {
               <label className="flex items-center justify-between gap-3 text-sm">
                 <span>Level</span>
                 <CustomDropdown<string>
-                  disabled={state.mode === "human"}
-                  value={state.mode === "human" ? "Human" : state.difficulty}
-                  widthLabels={["Human", "Easy", "Medium", "Hard"]}
+                  disabled={state.mode !== "cpu"}
+                  value={state.mode === "human" ? "Human" : state.mode === "online" ? "Online" : state.difficulty}
+                  widthLabels={["Human", "Online", "Easy", "Medium", "Hard"]}
                   options={state.mode === "human"
                     ? [{ value: "Human", label: "Human" }]
-                    : [
+                    : state.mode === "online"
+                      ? [{ value: "Online", label: "Online" }]
+                      : [
                         { value: "Easy", label: "Easy" },
                         { value: "Medium", label: "Medium" },
                         { value: "Hard", label: "Hard" },
@@ -2161,6 +2237,26 @@ export default function App() {
                   onChange={(difficulty) => setState((s) => ({ ...s, difficulty: difficulty as Difficulty }))}
                 />
               </label>
+              {state.mode === "online" && (
+                <div className="mt-2 rounded-2xl p-3 text-sm" style={{ background: "#ede7df", border: `1px solid ${BORDER}`, color: TEXT }}>
+                  {!onlineGame ? (
+                    <button
+                      type="button"
+                      onClick={createOnlineGameStub}
+                      className="w-full py-2 rounded-2xl transition-all duration-150 hover:opacity-80"
+                      style={{ background: "#ffffff", color: TEXT, border: `1px solid ${BORDER}` }}
+                    >
+                      Create invite link
+                    </button>
+                  ) : (
+                    <div className="space-y-1">
+                      <div>Status: {onlineGame.status === "waiting" ? "waiting for opponent" : "joined room"}</div>
+                      <div>Game: {onlineGame.gameId}</div>
+                      <div className="break-all opacity-80">{onlineGame.inviteLink}</div>
+                    </div>
+                  )}
+                </div>
+              )}
               {thinking && (
                 <div className="text-xs" style={{ color: ACCENT, letterSpacing: "0.22em" }}>
                   t h i n k i n g ...

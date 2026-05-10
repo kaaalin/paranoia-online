@@ -88,7 +88,15 @@ const LOGO_SRC = "/logo-paranoia.svg";
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string | undefined;
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined;
-const supabaseConfigured = Boolean(SUPABASE_URL && SUPABASE_ANON_KEY);
+
+function normalizeSupabaseRestUrl(url?: string) {
+  if (!url) return "";
+  const clean = url.trim().replace(/\/+$/, "");
+  return clean.endsWith("/rest/v1") ? clean : `${clean}/rest/v1`;
+}
+
+const SUPABASE_REST_URL = normalizeSupabaseRestUrl(SUPABASE_URL);
+const supabaseConfigured = Boolean(SUPABASE_REST_URL && SUPABASE_ANON_KEY);
 
 function supabaseHeaders(extra?: Record<string, string>) {
   return {
@@ -101,7 +109,7 @@ function supabaseHeaders(extra?: Record<string, string>) {
 
 async function supabaseInsertGame(row: Partial<GameRow>) {
   if (!SUPABASE_URL) return { error: { message: "Supabase URL is missing" } };
-  const response = await fetch(`${SUPABASE_URL}/rest/v1/games`, {
+  const response = await fetch(`${SUPABASE_REST_URL}/games`, {
     method: "POST",
     headers: supabaseHeaders({ Prefer: "return=minimal" }),
     body: JSON.stringify(row),
@@ -112,7 +120,7 @@ async function supabaseInsertGame(row: Partial<GameRow>) {
 
 async function supabaseGetGame(gameId: string) {
   if (!SUPABASE_URL) return { data: null, error: { message: "Supabase URL is missing" } };
-  const response = await fetch(`${SUPABASE_URL}/rest/v1/games?id=eq.${encodeURIComponent(gameId)}&select=*`, {
+  const response = await fetch(`${SUPABASE_REST_URL}/games?id=eq.${encodeURIComponent(gameId)}&select=*`, {
     headers: supabaseHeaders(),
   });
   if (!response.ok) return { data: null, error: { message: await response.text() } };
@@ -122,7 +130,7 @@ async function supabaseGetGame(gameId: string) {
 
 async function supabaseUpdateGame(gameId: string, patch: Partial<GameRow>) {
   if (!SUPABASE_URL) return { data: null, error: { message: "Supabase URL is missing" } };
-  const response = await fetch(`${SUPABASE_URL}/rest/v1/games?id=eq.${encodeURIComponent(gameId)}`, {
+  const response = await fetch(`${SUPABASE_REST_URL}/games?id=eq.${encodeURIComponent(gameId)}`, {
     method: "PATCH",
     headers: supabaseHeaders({ Prefer: "return=representation" }),
     body: JSON.stringify(patch),

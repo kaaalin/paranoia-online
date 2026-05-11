@@ -86,8 +86,9 @@ const TEXT = "#3a332c";
 const BORDER = "#d8cfc2";
 const LOGO_SRC = "/logo-paranoia.svg";
 
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string | undefined;
-const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined;
+const ENV = (import.meta as any)?.env || {};
+const SUPABASE_URL = ENV.VITE_SUPABASE_URL as string | undefined;
+const SUPABASE_ANON_KEY = ENV.VITE_SUPABASE_ANON_KEY as string | undefined;
 
 function normalizeSupabaseRestUrl(url?: string) {
   if (!url) return "";
@@ -2252,7 +2253,6 @@ export default function App() {
                   ) : (
                     <div className="space-y-1">
                       <div>Status: {onlineGame.status === "waiting" ? "waiting for opponent" : "joined room"}</div>
-                      <div>Game: {onlineGame.gameId}</div>
                       <div className="break-all opacity-80">{onlineGame.inviteLink}</div>
                     </div>
                   )}
@@ -2470,7 +2470,6 @@ export default function App() {
                   ) : (
                     <div className="space-y-1">
                       <div>Status: {onlineGame.status === "waiting" ? "waiting for opponent" : "joined room"}</div>
-                      <div>Game: {onlineGame.gameId}</div>
                       <div className="break-all opacity-80">{onlineGame.inviteLink}</div>
                     </div>
                   )}

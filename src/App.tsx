@@ -85,6 +85,7 @@ const PAGE_BG = "#f6f1ea";
 const TEXT = "#3a332c";
 const BORDER = "#d8cfc2";
 const LOGO_SRC = "/logo-paranoia.svg";
+const CHECKMATE_WIN_GREEN = "rgba(74,222,128,.75)";
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string | undefined;
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined;
@@ -1239,6 +1240,7 @@ function SquareView({
   piece,
   selected,
   highlight,
+  winnerCheckmateSquare = false,
   onClick,
   onDragStart,
   onDrop,
@@ -1250,6 +1252,7 @@ function SquareView({
   piece: Piece | null;
   selected: boolean;
   highlight: "from" | "to" | "none";
+  winnerCheckmateSquare?: boolean;
   onClick: () => void;
   onDragStart: (e: React.DragEvent<HTMLButtonElement>, sq: Square) => void;
   onDrop: (e: React.DragEvent<HTMLButtonElement>, sq: Square) => void;
@@ -1278,7 +1281,7 @@ function SquareView({
       onDragOver={onDragOver}
       className="relative aspect-square flex items-center justify-center select-none"
       style={{
-        background: isDark ? ACCENT : `linear-gradient(135deg, #ead8bb 0%, ${WOOD_LIGHT} 100%)`,
+        background: winnerCheckmateSquare ? CHECKMATE_WIN_GREEN : isDark ? ACCENT : `linear-gradient(135deg, #ead8bb 0%, ${WOOD_LIGHT} 100%)`,
         boxShadow: border,
       }}
     >
@@ -2076,6 +2079,7 @@ export default function App() {
   }
 
   const thinking = state.mode === "cpu" && state.turn === state.cpuColor && !state.pendingPromotion && !state.winner && !purgeChoice;
+  const checkmateWinner = state.result?.toLowerCase().includes("checkmate") ? state.winner : null;
 
   const valueMap: Record<PieceType, number> = { K: 0, Q: 9, R: 5, B: 3, N: 3, P: 1 };
   const whiteTotal = state.quietus.white.reduce((s, p) => s + valueMap[p.type], 0);
@@ -2163,6 +2167,7 @@ export default function App() {
                         piece={state.board[sq]}
                         selected={state.selected === sq}
                         highlight={highlight}
+                        winnerCheckmateSquare={!!checkmateWinner && state.board[sq]?.color === checkmateWinner}
                         onClick={() => handleClick(sq)}
                         onDragStart={handleDragStart}
                         onDrop={handleDrop}

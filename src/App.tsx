@@ -87,6 +87,144 @@ const BORDER = "#d8cfc2";
 const LOGO_SRC = "/logo-paranoia.svg";
 const CHECKMATE_WIN_GREEN = "rgba(74,222,128,.75)";
 
+function detectBoardCheckmateWinner(state: any): "w" | "b" | null {
+  const board = state?.board;
+  const side = state?.turn;
+  if (!board || (side !== "w" && side !== "b")) return null;
+
+  const files = "abcdefgh";
+  const squares: string[] = [];
+  for (const f of files) for (let r = 1; r <= 8; r++) squares.push(`${f}${r}`);
+
+  const other = (c: "w" | "b") => (c === "w" ? "b" : "w");
+  const inBounds = (f: number, r: number) => f >= 0 && f < 8 && r >= 1 && r <= 8;
+  const toSq = (f: number, r: number) => `${files[f]}${r}`;
+  const fromSq = (sq: string) => ({ f: files.indexOf(sq[0]), r: Number(sq[1]) });
+  const kindOf = (p: any) => String(p?.kind ?? p?.type ?? p?.role ?? p?.piece ?? "").toLowerCase();
+  const colorOf = (p: any) => p?.color;
+
+  const kingSq = squares.find((sq) => {
+    const p = board[sq];
+    const k = kindOf(p);
+    return p && colorOf(p) === side && (k === "k" || k === "king");
+  });
+  if (!kingSq) return null;
+
+  const attacksSquare = (from: string, target: string, b: any) => {
+    const p = b[from];
+    if (!p) return false;
+    const k = kindOf(p);
+    const c = colorOf(p);
+    const a = fromSq(from);
+    const t = fromSq(target);
+    const df = t.f - a.f;
+    const dr = t.r - a.r;
+    const adf = Math.abs(df);
+    const adr = Math.abs(dr);
+
+    if (k === "p" || k === "pawn") {
+      const dir = c === "w" ? 1 : -1;
+      return adr === 1 && dr === dir;
+    }
+    if (k === "n" || k === "knight") return (adf === 1 && adr === 2) || (adf === 2 && adr === 1);
+    if (k === "k" || k === "king") return Math.max(adf, adr) === 1;
+
+    const slide = (stepF: number, stepR: number) => {
+      let f = a.f + stepF;
+      let r = a.r + stepR;
+      while (inBounds(f, r)) {
+        const sq = toSq(f, r);
+        if (sq === target) return true;
+        if (b[sq]) return false;
+        f += stepF;
+        r += stepR;
+      }
+      return false;
+    };
+
+    if ((k === "b" || k === "bishop") && adf === adr) return slide(Math.sign(df), Math.sign(dr));
+    if ((k === "r" || k === "rook") && (df === 0 || dr === 0)) return slide(Math.sign(df), Math.sign(dr));
+    if ((k === "q" || k === "queen") && (adf === adr || df === 0 || dr === 0)) return slide(Math.sign(df), Math.sign(dr));
+    return false;
+  };
+
+  const isInCheck = (c: "w" | "b", b: any) => {
+    const ksq = squares.find((sq) => {
+      const p = b[sq];
+      const k = kindOf(p);
+      return p && colorOf(p) === c && (k === "k" || k === "king");
+    });
+    if (!ksq) return true;
+    return squares.some((sq) => b[sq] && colorOf(b[sq]) === other(c) && attacksSquare(sq, ksq, b));
+  };
+
+  if (!isInCheck(side, board)) return null;
+
+  const pseudoTargets = (from: string, b: any) => {
+    const p = b[from];
+    if (!p) return [] as string[];
+    const k = kindOf(p);
+    const c = colorOf(p);
+    const a = fromSq(from);
+    const out: string[] = [];
+    const add = (f: number, r: number, captureOnly = false, moveOnly = false) => {
+      if (!inBounds(f, r)) return;
+      const sq = toSq(f, r);
+      const dst = b[sq];
+      if (moveOnly && dst) return;
+      if (captureOnly && (!dst || colorOf(dst) === c)) return;
+      if (!captureOnly && dst && colorOf(dst) === c) return;
+      out.push(sq);
+    };
+    const ray = (df: number, dr: number) => {
+      let f = a.f + df;
+      let r = a.r + dr;
+      while (inBounds(f, r)) {
+        const sq = toSq(f, r);
+        const dst = b[sq];
+        if (!dst) out.push(sq);
+        else {
+          if (colorOf(dst) !== c) out.push(sq);
+          break;
+        }
+        f += df;
+        r += dr;
+      }
+    };
+
+    if (k === "p" || k === "pawn") {
+      const dir = c === "w" ? 1 : -1;
+      add(a.f, a.r + dir, false, true);
+      const startRank = c === "w" ? 2 : 7;
+      if (a.r === startRank && !b[toSq(a.f, a.r + dir)]) add(a.f, a.r + dir * 2, false, true);
+      add(a.f - 1, a.r + dir, true);
+      add(a.f + 1, a.r + dir, true);
+    } else if (k === "n" || k === "knight") {
+      [[1,2],[2,1],[-1,2],[-2,1],[1,-2],[2,-1],[-1,-2],[-2,-1]].forEach(([df, dr]) => add(a.f + df, a.r + dr));
+    } else if (k === "k" || k === "king") {
+      [[1,0],[-1,0],[0,1],[0,-1],[1,1],[1,-1],[-1,1],[-1,-1]].forEach(([df, dr]) => add(a.f + df, a.r + dr));
+    } else if (k === "b" || k === "bishop") {
+      [[1,1],[1,-1],[-1,1],[-1,-1]].forEach(([df, dr]) => ray(df, dr));
+    } else if (k === "r" || k === "rook") {
+      [[1,0],[-1,0],[0,1],[0,-1]].forEach(([df, dr]) => ray(df, dr));
+    } else if (k === "q" || k === "queen") {
+      [[1,0],[-1,0],[0,1],[0,-1],[1,1],[1,-1],[-1,1],[-1,-1]].forEach(([df, dr]) => ray(df, dr));
+    }
+    return out;
+  };
+
+  const hasLegalMove = squares.some((from) => {
+    const p = board[from];
+    if (!p || colorOf(p) !== side) return false;
+    return pseudoTargets(from, board).some((to) => {
+      const next = { ...board, [to]: p, [from]: null };
+      return !isInCheck(side, next);
+    });
+  });
+
+  return hasLegalMove ? null : other(side);
+}
+
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string | undefined;
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined;
 
@@ -2079,7 +2217,10 @@ export default function App() {
   }
 
   const thinking = state.mode === "cpu" && state.turn === state.cpuColor && !state.pendingPromotion && !state.winner && !purgeChoice;
-  const checkmateWinner = state.result?.toLowerCase().includes("checkmate") ? state.winner : null;
+    const checkmateWinner =
+    state.result?.toLowerCase().includes("checkmate") && state.winner
+      ? state.winner
+      : detectBoardCheckmateWinner(state);
 
   const valueMap: Record<PieceType, number> = { K: 0, Q: 9, R: 5, B: 3, N: 3, P: 1 };
   const whiteTotal = state.quietus.white.reduce((s, p) => s + valueMap[p.type], 0);

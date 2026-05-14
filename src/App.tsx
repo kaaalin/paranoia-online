@@ -155,6 +155,34 @@ type GameRow = {
   updated_at?: string;
 };
 
+function onlineSnapshotKey(game: Partial<GameRow>) {
+  return JSON.stringify({
+    status: game.status,
+    white_player_id: game.white_player_id,
+    black_player_id: game.black_player_id,
+    board_json: game.board_json,
+    turn: game.turn,
+    quietus_json: game.quietus_json,
+    secrets_json: game.secrets_json,
+    last_move_json: game.last_move_json,
+    result: game.result,
+  });
+}
+
+function sameOnlinePosition(state: State, game: GameRow) {
+  // For online polling, `last_move_json` may differ only because its embedded
+  // status/message was saved in the database. That must NOT count as a new
+  // board position, otherwise the polling tick immediately clears local UI
+  // selection and restores the old message.
+  return (
+    JSON.stringify(state.board) === JSON.stringify(game.board_json) &&
+    state.turn === game.turn &&
+    JSON.stringify(state.quietus) === JSON.stringify(game.quietus_json) &&
+    JSON.stringify(state.secrets) === JSON.stringify(game.secrets_json) &&
+    state.result === game.result
+  );
+}
+
 const other = (c: Color): Color => (c === "white" ? "black" : "white");
 const keyOf = (f: number, r: number) => `${FILES[f]}${r}` as Square;
 const coords = (sq: Square) => ({
@@ -254,7 +282,7 @@ function initialState(): State {
     status: "White to move",
     winner: null,
     result: null,
-    showInfo: false,
+    showRules: false,
     secrets: createSecrets(board),
     peek: "none",
     pendingPromotion: null,
@@ -1620,6 +1648,7 @@ export default function App() {
   const workerRef = useRef<Worker | null>(null);
   const pendingRequestIdRef = useRef(0);
   const savingOnlineRef = useRef(false);
+  const lastOnlineSnapshotRef = useRef("");
 
   useEffect(() => {
     runSelfTests();
@@ -1694,6 +1723,7 @@ export default function App() {
     setPurgeChoice(null);
     setPeekConfirm(null);
     setOnlineGame(null);
+    lastOnlineSnapshotRef.current = "";
     if (typeof window !== "undefined" && (window.location.pathname.startsWith("/game/") || window.location.search.includes("game="))) {
       window.history.pushState({}, "", "/");
     }
@@ -1701,21 +1731,29 @@ export default function App() {
   }
 
   function applyGameRowToState(game: GameRow, fallbackStatus?: string, playerColor?: Color) {
-    setState((s) => ({
-      ...s,
-      mode: "online",
-      flipped: playerColor ? playerColor === "black" : onlineGame?.playerColor === "black" ? true : s.flipped,
-      board: game.board_json,
-      turn: game.turn,
-      quietus: game.quietus_json,
-      secrets: game.secrets_json,
-      lastMove: game.last_move_json || null,
-      result: game.result,
-      winner: null,
-      pendingPromotion: null,
-      selected: null,
-      status: fallbackStatus || game.result || (game.last_move_json as any)?.status || s.status || "White to move",
-    }));
+    setState((s) => {
+      const samePosition = sameOnlinePosition(s, game);
+      const sameBoard = JSON.stringify(s.board) === JSON.stringify(game.board_json);
+      const preserveLocalOnlineUi = sameBoard && !!s.selected;
+      const nextPlayerColor = playerColor || onlineGame?.playerColor;
+
+      return {
+        ...s,
+        mode: "online",
+        flipped: nextPlayerColor ? nextPlayerColor === "black" : s.flipped,
+        board: game.board_json,
+        turn: game.turn,
+        quietus: game.quietus_json,
+        secrets: game.secrets_json,
+        lastMove: game.last_move_json || null,
+        result: game.result,
+        winner: null,
+        pendingPromotion: null,
+        selected: samePosition || preserveLocalOnlineUi ? s.selected : null,
+        legalTargets: samePosition || preserveLocalOnlineUi ? s.legalTargets : [],
+        status: fallbackStatus || (samePosition || preserveLocalOnlineUi ? s.status : game.result || (game.last_move_json as any)?.status || s.status || "White to move"),
+      };
+    });
   }
 
   async function createOnlineGame() {
@@ -1730,7 +1768,7 @@ export default function App() {
     const baseUrl = typeof window !== "undefined" ? window.location.origin : "";
     const inviteLink = `${baseUrl}/?game=${gameId}`;
 
-    const { error } = await supabaseInsertGame({
+    const startRow: Partial<GameRow> = {
       id: gameId,
       status: "waiting",
       white_player_id: playerId,
@@ -1741,13 +1779,16 @@ export default function App() {
       secrets_json: start.secrets,
       last_move_json: start.lastMove,
       result: start.result,
-    });
+    };
+
+    const { error } = await supabaseInsertGame(startRow);
 
     if (error) {
       setState((s) => ({ ...s, mode: "online", status: `Could not create online game: ${error.message}` }));
       return;
     }
 
+    lastOnlineSnapshotRef.current = onlineSnapshotKey(startRow);
     setOnlineGame({ gameId, playerId, playerColor: "white", inviteLink, status: "waiting" });
     setState({ ...start, mode: "online", status: `Created online game ${gameId}` });
 
@@ -1794,6 +1835,7 @@ export default function App() {
       joinedColor = "black";
     }
 
+    lastOnlineSnapshotRef.current = onlineSnapshotKey(game);
     setOnlineGame({
       gameId: cleanGameId,
       playerId: joinedPlayerId,
@@ -1815,7 +1857,7 @@ export default function App() {
       turn: next.turn,
       quietus_json: next.quietus,
       secrets_json: next.secrets,
-      last_move_json: next.lastMove ? { ...next.lastMove, status: next.status } : next.lastMove,
+      last_move_json: next.lastMove ? { ...next.lastMove, status: next.status } : null,
       result: next.result,
       status: next.result ? "finished" : "active",
       updated_at: new Date().toISOString(),
@@ -1828,6 +1870,7 @@ export default function App() {
     }
 
     if (data) {
+      lastOnlineSnapshotRef.current = onlineSnapshotKey(data as GameRow);
       applyGameRowToState(data as GameRow);
     }
 
@@ -1859,6 +1902,10 @@ export default function App() {
       const { data: game } = await supabaseGetGame(onlineGame!.gameId);
       if (cancelled || !game) return;
       const row = game as GameRow;
+      const remoteSnapshot = onlineSnapshotKey(row);
+      if (remoteSnapshot === lastOnlineSnapshotRef.current) return;
+      lastOnlineSnapshotRef.current = remoteSnapshot;
+
       setOnlineGame((current) => current ? {
         ...current,
         status: row.status === "finished" ? "active" : row.status,

@@ -2251,7 +2251,7 @@ export default function App() {
                         onDragStart={handleDragStart}
                         onDrop={handleDrop}
                         onDragOver={handleDragOver}
-                        pieceSize="2.1rem"
+                        pieceSize={isIOS ? "2.45rem" : "2.1rem"}
                         rotatePiece={state.mode === "human" && !!state.board[sq] && state.board[sq]?.color === other(bottomColor)}
                       />
                     );

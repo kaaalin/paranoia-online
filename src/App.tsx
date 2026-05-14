@@ -1782,7 +1782,6 @@ export default function App() {
         winner: null,
         pendingPromotion: null,
         selected: samePosition || preserveLocalOnlineUi ? s.selected : null,
-        legalTargets: samePosition || preserveLocalOnlineUi ? s.legalTargets : [],
         status: fallbackStatus || (samePosition || preserveLocalOnlineUi ? s.status : game.result || (game.last_move_json as any)?.status || s.status || "White to move"),
       };
     });
@@ -1973,7 +1972,7 @@ export default function App() {
       return;
     }
 
-    if ((state.selected === sq || isMateWinningPieceSquare)) {
+    if (state.selected === sq) {
       setState((s) => ({ ...s, selected: null }));
       return;
     }
@@ -2728,7 +2727,23 @@ export default function App() {
         </div>
       </div>
       {peekConfirm && (
-        <div className="fixed inset-0 bg-black/30 backdrop-blur-[2px] flex items-center justify-center p-2 z-50" onClick={() => setPeekConfirm(null)}>
+        <div
+          className={
+            state.mode === "human"
+              ? "fixed z-50 flex items-start justify-center p-2"
+              : "fixed inset-0 bg-black/30 backdrop-blur-[2px] flex items-center justify-center p-2 z-50"
+          }
+          style={
+            state.mode === "human"
+              ? {
+                  width: isMobile ? "min(340px, calc(100vw - 24px))" : "280px",
+                  right: isMobile ? "12px" : "max(1.5rem, calc((100vw - 80rem) / 2 + 1.5rem))",
+                  top: isMobile ? "calc(50vh - 155px)" : "84px",
+                }
+              : undefined
+          }
+          onClick={() => setPeekConfirm(null)}
+        >
           <div
             className="w-full max-w-[340px] rounded-[24px] p-4 shadow-lg"
             style={{

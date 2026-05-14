@@ -184,11 +184,20 @@ function sameOnlinePosition(state: State, game: GameRow) {
 }
 
 function getCheckmateWinner(state: State): Color | null {
-  const text = `${state.result || ""} ${state.status || ""}`.toLowerCase();
-
   if (state.winner === "white" || state.winner === "black") return state.winner;
-  if (text.includes("white wins by checkmate") || text.includes("checkmate") && text.includes("white wins")) return "white";
-  if (text.includes("black wins by checkmate") || text.includes("checkmate") && text.includes("black wins")) return "black";
+
+  // Detect mate from the actual board too, not only from the stored status text.
+  // This also fixes positions that were reached before the status string was
+  // correctly changed to "checkmate".
+  const currentKing = findKing(state.board, state.turn);
+  if (currentKing && squareAttacked(state, currentKing, other(state.turn))) {
+    const replies = legalMoves({ ...state, selected: null }, state.turn);
+    if (replies.length === 0) return other(state.turn);
+  }
+
+  const text = `${state.result || ""} ${state.status || ""}`.toLowerCase();
+  if (text.includes("white wins by checkmate") || (text.includes("checkmate") && text.includes("white wins"))) return "white";
+  if (text.includes("black wins by checkmate") || (text.includes("checkmate") && text.includes("black wins"))) return "black";
 
   return null;
 }
@@ -604,7 +613,15 @@ function legalMoves(state: State, color: Color): Move[] {
   }
 
   if (!state.secrets[color].revealed && state.secrets[color].pieceId !== "__hidden__") {
-    legal.push({ from: "a1", kind: "reveal" });
+    const revealMove: Move = { from: "a1", kind: "reveal" };
+    const next = simulateMoveNoFinalize({ ...state, turn: color }, revealMove);
+    const kingSq = findKing(next.board, color);
+
+    // Revealing is a legal reply to check only if the reveal actually removes
+    // the check. Otherwise it must not prevent checkmate detection.
+    if (kingSq && !squareAttacked(next, kingSq, other(color))) {
+      legal.push(revealMove);
+    }
   }
   return legal;
 }
@@ -1003,7 +1020,12 @@ function createCpuWorker() {
           if (!squareAttacked(next, kingSq, other(color))) legal.push(variant);
         }
       }
-      if (!state.secrets[color].revealed && state.secrets[color].pieceId !== "__hidden__") legal.push({ from: "a1", kind: "reveal" });
+      if (!state.secrets[color].revealed && state.secrets[color].pieceId !== "__hidden__") {
+        const revealMove = { from: "a1", kind: "reveal" };
+        const next = simulateMoveNoFinalize({ ...state, turn: color }, revealMove);
+        const kingSq = findKing(next.board, color);
+        if (kingSq && !squareAttacked(next, kingSq, other(color))) legal.push(revealMove);
+      }
       return legal;
     };
     const computeTerminalState = (state) => {
@@ -2134,6 +2156,7 @@ export default function App() {
 
   const thinking = state.mode === "cpu" && state.turn === state.cpuColor && !state.pendingPromotion && !state.winner && !purgeChoice;
   const mateWinner = getCheckmateWinner(state);
+  const mateResultText = mateWinner ? `${mateWinner === "white" ? "White" : "Black"} wins by checkmate` : null;
 
 
   const valueMap: Record<PieceType, number> = { K: 0, Q: 9, R: 5, B: 3, N: 3, P: 1 };
@@ -2177,7 +2200,9 @@ export default function App() {
             }}
           >
             <div style={{ textAlign: "left" }}>
-              {state.result
+              {mateResultText
+                ? mateResultText
+                : state.result
                 ? state.result
                 : (state.status && state.status !== "White to move")
                   ? state.status
@@ -2459,7 +2484,7 @@ export default function App() {
                 Turn: <span className="font-semibold capitalize" style={{ color: "#000000" }}>{state.turn}</span>
               </div>
               <div className="mt-2 min-h-16 rounded-2xl p-3 text-sm border" style={{ background: "#ede7df", borderColor: BORDER, color: TEXT }}>
-                {state.result || state.status}
+                {mateResultText || state.result || state.status}
               </div>
               <div className="mt-3">
                 <button onClick={() => setState((s) => ({ ...s, showRules: true }))} className="px-4 py-2 rounded-2xl font-semibold" style={{ background: ACCENT, color: "#ffffff" }}>

@@ -2240,7 +2240,7 @@ export default function App() {
                     const sq = `${file}${rank}` as Square;
                     const lm = state.lastMove;
                     const isMateWinningPieceSquare = !!mateWinner && state.board[sq]?.color === mateWinner;
-                    const highlight: "from" | "to" | "none" = isMateWinningPieceSquare ? "to" : lm?.from === sq ? "from" : lm?.to === sq ? "to" : "none";
+                    const highlight: "from" | "to" | "none" = isMateWinningPieceSquare ? "from" : lm?.from === sq ? "from" : lm?.to === sq ? "to" : "none";
                     return (
                       <SquareView
                         key={`mobile-${sq}`}
@@ -2609,7 +2609,7 @@ export default function App() {
                       const sq = `${file}${rank}` as Square;
                       const lm = state.lastMove;
                       const isMateWinningPieceSquare = !!mateWinner && state.board[sq]?.color === mateWinner;
-                    const highlight: "from" | "to" | "none" = isMateWinningPieceSquare ? "to" : lm?.from === sq ? "from" : lm?.to === sq ? "to" : "none";
+                    const highlight: "from" | "to" | "none" = isMateWinningPieceSquare ? "from" : lm?.from === sq ? "from" : lm?.to === sq ? "to" : "none";
                       return (
                         <SquareView
                           key={sq}

@@ -184,60 +184,13 @@ function sameOnlinePosition(state: State, game: GameRow) {
 }
 
 function getCheckmateWinner(state: State): Color | null {
-  // Prefer the real board position over the text message. This lets the app
-  // detect mate even if an earlier status string only says "is in check".
-  if (isInCheck(state.board, state.turn, state.secrets) && !hasBoardOnlyLegalReplyToCheck(state, state.turn)) {
-    return other(state.turn);
-  }
-
   const text = `${state.result || ""} ${state.status || ""}`.toLowerCase();
-  if (!text.includes("checkmate")) return null;
+
   if (state.winner === "white" || state.winner === "black") return state.winner;
-  if (text.includes("white wins")) return "white";
-  if (text.includes("black wins")) return "black";
-  return state.turn === "white" ? "black" : "white";
-}
+  if (text.includes("white wins by checkmate") || text.includes("checkmate") && text.includes("white wins")) return "white";
+  if (text.includes("black wins by checkmate") || text.includes("checkmate") && text.includes("black wins")) return "black";
 
-function boardOnlyLegalTargetsForMateCheck(state: State, from: Square): Square[] {
-  const piece = state.board[from];
-  if (!piece || piece.color !== state.turn) return [];
-
-  const rawTargets = legalTargets(from, state);
-  return rawTargets.filter((to) => {
-    const target = state.board[to];
-
-    // Purges / self-captures are a Paranoia action, but they must not be
-    // counted as ordinary legal replies to checkmate unless the resulting
-    // chess position actually removes the check. Keeping them out here fixes
-    // positions where a side is in chess-mate but the generic target list still
-    // contains own-piece purge targets.
-    if (target && target.color === piece.color) return false;
-
-    const nextBoard = { ...state.board, [from]: null, [to]: piece } as Record<Square, Piece | null>;
-    return !isInCheck(nextBoard, piece.color, state.secrets);
-  });
-}
-
-function hasBoardOnlyLegalReplyToCheck(state: State, color: Color): boolean {
-  const testState = { ...state, turn: color } as State;
-  return SQUARES.some((sq) => boardOnlyLegalTargetsForMateCheck(testState, sq).length > 0);
-}
-
-function finishCheckOrMate(state: State, checkedColor: Color, baseStatus: string): State {
-  if (!isInCheck(state.board, checkedColor, state.secrets)) return state;
-
-  const winner = other(checkedColor);
-  const isMate = !hasBoardOnlyLegalReplyToCheck(state, checkedColor);
-  if (!isMate) {
-    return { ...state, status: `${baseStatus} ${checkedColor} is in check` };
-  }
-
-  return {
-    ...state,
-    winner,
-    result: `${winner === "white" ? "White" : "Black"} wins by checkmate`,
-    status: `${baseStatus} checkmate — ${winner === "white" ? "White" : "Black"} wins`,
-  };
+  return null;
 }
 
 const other = (c: Color): Color => (c === "white" ? "black" : "white");
@@ -2182,23 +2135,6 @@ export default function App() {
   const thinking = state.mode === "cpu" && state.turn === state.cpuColor && !state.pendingPromotion && !state.winner && !purgeChoice;
   const mateWinner = getCheckmateWinner(state);
 
-  useEffect(() => {
-    setState((s) => {
-      const winner = getCheckmateWinner(s);
-      if (!winner) return s;
-      if (s.winner === winner && s.result?.toLowerCase().includes("checkmate")) return s;
-
-      const winnerLabel = winner === "white" ? "White" : "Black";
-      return {
-        ...s,
-        winner,
-        result: `${winnerLabel} wins by checkmate`,
-        status: `Checkmate — ${winnerLabel} wins`,
-        selected: null,
-        legalTargets: [],
-      };
-    });
-  }, [state.board, state.turn, state.secrets, state.winner, state.result]);
 
   const valueMap: Record<PieceType, number> = { K: 0, Q: 9, R: 5, B: 3, N: 3, P: 1 };
   const whiteTotal = state.quietus.white.reduce((s, p) => s + valueMap[p.type], 0);

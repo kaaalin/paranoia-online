@@ -183,6 +183,15 @@ function sameOnlinePosition(state: State, game: GameRow) {
   );
 }
 
+function getCheckmateWinner(state: Pick<State, "winner" | "result" | "status" | "turn">): Color | null {
+  const text = `${state.result || ""} ${state.status || ""}`.toLowerCase();
+  if (!text.includes("checkmate")) return null;
+  if (state.winner === "white" || state.winner === "black") return state.winner;
+  if (text.includes("white wins")) return "white";
+  if (text.includes("black wins")) return "black";
+  return state.turn === "white" ? "black" : "white";
+}
+
 const other = (c: Color): Color => (c === "white" ? "black" : "white");
 const keyOf = (f: number, r: number) => `${FILES[f]}${r}` as Square;
 const coords = (sq: Square) => ({
@@ -2123,6 +2132,7 @@ export default function App() {
   }
 
   const thinking = state.mode === "cpu" && state.turn === state.cpuColor && !state.pendingPromotion && !state.winner && !purgeChoice;
+  const mateWinner = getCheckmateWinner(state);
 
   const valueMap: Record<PieceType, number> = { K: 0, Q: 9, R: 5, B: 3, N: 3, P: 1 };
   const whiteTotal = state.quietus.white.reduce((s, p) => s + valueMap[p.type], 0);
@@ -2202,7 +2212,8 @@ export default function App() {
                   boardOrderFiles.map((file) => {
                     const sq = `${file}${rank}` as Square;
                     const lm = state.lastMove;
-                    const highlight: "from" | "to" | "none" = lm?.from === sq ? "from" : lm?.to === sq ? "to" : "none";
+                    const isMateWinningPieceSquare = !!mateWinner && state.board[sq]?.color === mateWinner;
+                    const highlight: "from" | "to" | "none" = isMateWinningPieceSquare ? "to" : lm?.from === sq ? "from" : lm?.to === sq ? "to" : "none";
                     return (
                       <SquareView
                         key={`mobile-${sq}`}
@@ -2570,7 +2581,8 @@ export default function App() {
                     boardOrderFiles.map((file) => {
                       const sq = `${file}${rank}` as Square;
                       const lm = state.lastMove;
-                      const highlight: "from" | "to" | "none" = lm?.from === sq ? "from" : lm?.to === sq ? "to" : "none";
+                      const isMateWinningPieceSquare = !!mateWinner && state.board[sq]?.color === mateWinner;
+                    const highlight: "from" | "to" | "none" = isMateWinningPieceSquare ? "to" : lm?.from === sq ? "from" : lm?.to === sq ? "to" : "none";
                       return (
                         <SquareView
                           key={sq}

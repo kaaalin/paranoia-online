@@ -75,6 +75,30 @@ const GLYPHS: Record<Color, Record<PieceType, string>> = {
   black: { K: "♚", Q: "♛", R: "♜", B: "♝", N: "♞", P: "♟" },
 };
 
+function PawnIcon({ color, size = "1em" }: { color: Color; size?: string }) {
+  const isWhite = color === "white";
+  const fill = isWhite ? "#ffffff" : "#000000";
+  const stroke = isWhite ? "#000000" : "#000000";
+
+  return (
+    <svg
+      viewBox="0 0 64 64"
+      width={size}
+      height={size}
+      aria-hidden="true"
+      focusable="false"
+      style={{ display: "block", overflow: "visible" }}
+    >
+      <g fill={fill} stroke={stroke} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="32" cy="16" r="8.2" />
+        <path d="M24.5 27.5h15c1 8 5.6 13.2 11.5 17.8H13c5.9-4.6 10.5-9.8 11.5-17.8Z" />
+        <path d="M17.2 45.3h29.6c2.7 2.3 4.5 5.4 5.2 9.2H12c.7-3.8 2.5-6.9 5.2-9.2Z" />
+        <path d="M10 56h44" />
+      </g>
+    </svg>
+  );
+}
+
 
 
 const WOOD_LIGHT = "#dcc4a1";
@@ -1356,10 +1380,11 @@ function SquareView({
             transformOrigin: "center",
             textShadow: piece.color === "white" ? "0 0 0.8px #000, 0 0 0.8px #000" : "none",
             WebkitTextStroke: piece.color === "white" ? "0.6px #000" : undefined,
+            WebkitTextFillColor: piece.color === "white" ? "#ffffff" : "#000000",
             color: piece.color === "white" ? "#ffffff" : "#000000",
           }}
         >
-          {glyphSet[piece.color][piece.type]}
+          {piece.type === "P" ? <PawnIcon color={piece.color} size={pieceSize} /> : glyphSet[piece.color][piece.type]}
         </div>
       )}
     </button>

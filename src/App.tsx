@@ -1821,7 +1821,7 @@ export default function App() {
 
     lastOnlineSnapshotRef.current = onlineSnapshotKey(startRow);
     setOnlineGame({ gameId, playerId, playerColor: "white", inviteLink, status: "waiting" });
-    setState({ ...start, mode: "online", status: `Created online game ${gameId}` });
+    setState({ ...start, mode: "online", status: "Online game created. Share the link to start." });
 
     if (typeof window !== "undefined") {
       window.history.pushState({}, "", `/?game=${gameId}`);
@@ -1875,7 +1875,7 @@ export default function App() {
       status: game.status === "finished" ? "active" : game.status,
     });
 
-    applyGameRowToState(game, `Joined online game ${cleanGameId}`, joinedColor);
+    applyGameRowToState(game, "Joined online game.", joinedColor);
   }
 
   async function saveOnlineState(next: State) {
@@ -2336,7 +2336,6 @@ export default function App() {
                   ) : (
                     <div className="space-y-1">
                       <div>Status: {onlineGame.status === "waiting" ? "waiting for opponent" : "joined room"}</div>
-                      <div>Game: {onlineGame.gameId}</div>
                       <div className="break-all opacity-80">{onlineGame.inviteLink}</div>
                     </div>
                   )}
@@ -2554,7 +2553,6 @@ export default function App() {
                   ) : (
                     <div className="space-y-1">
                       <div>Status: {onlineGame.status === "waiting" ? "waiting for opponent" : "joined room"}</div>
-                      <div>Game: {onlineGame.gameId}</div>
                       <div className="break-all opacity-80">{onlineGame.inviteLink}</div>
                     </div>
                   )}

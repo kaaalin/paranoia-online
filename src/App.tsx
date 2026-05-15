@@ -2163,6 +2163,35 @@ export default function App() {
   const mateWinner = getCheckmateWinner(state);
   const mateResultText = mateWinner ? `${mateWinner === "white" ? "White" : "Black"} wins by checkmate` : null;
 
+  async function shareOnlineInvite() {
+    const link = onlineGame?.inviteLink;
+    if (!link) return;
+
+    const text = `Join my Paranoia Chess game: ${link}`;
+
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: "Paranoia Chess",
+          text: "Join my Paranoia Chess game",
+          url: link,
+        });
+        return;
+      }
+
+      await navigator.clipboard?.writeText(link);
+      window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank", "noopener,noreferrer");
+      setState((s) => ({ ...s, status: "Link copied. WhatsApp share opened." }));
+    } catch {
+      try {
+        await navigator.clipboard?.writeText(link);
+        setState((s) => ({ ...s, status: "Link copied." }));
+      } catch {
+        setState((s) => ({ ...s, status: "Could not share automatically. Copy the link manually." }));
+      }
+    }
+  }
+
 
   const valueMap: Record<PieceType, number> = { K: 0, Q: 9, R: 5, B: 3, N: 3, P: 1 };
   const whiteTotal = state.quietus.white.reduce((s, p) => s + valueMap[p.type], 0);
@@ -2340,9 +2369,17 @@ export default function App() {
                       Create invite link
                     </button>
                   ) : (
-                    <div className="space-y-1">
+                    <div className="space-y-2">
                       <div>Status: {onlineGame.status === "waiting" ? "waiting for opponent" : "joined room"}</div>
                       <div className="break-all opacity-80">{onlineGame.inviteLink}</div>
+                      <button
+                        type="button"
+                        onClick={shareOnlineInvite}
+                        className="w-full py-2 rounded-2xl transition-all duration-150 hover:opacity-80"
+                        style={{ background: "#ffffff", color: TEXT, border: `1px solid ${BORDER}` }}
+                      >
+                        Share link
+                      </button>
                     </div>
                   )}
                 </div>
@@ -2557,9 +2594,17 @@ export default function App() {
                       Create invite link
                     </button>
                   ) : (
-                    <div className="space-y-1">
+                    <div className="space-y-2">
                       <div>Status: {onlineGame.status === "waiting" ? "waiting for opponent" : "joined room"}</div>
                       <div className="break-all opacity-80">{onlineGame.inviteLink}</div>
+                      <button
+                        type="button"
+                        onClick={shareOnlineInvite}
+                        className="w-full py-2 rounded-2xl transition-all duration-150 hover:opacity-80"
+                        style={{ background: "#ffffff", color: TEXT, border: `1px solid ${BORDER}` }}
+                      >
+                        Share link
+                      </button>
                     </div>
                   )}
                 </div>

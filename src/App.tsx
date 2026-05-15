@@ -2160,6 +2160,7 @@ export default function App() {
   }
 
   const thinking = state.mode === "cpu" && state.turn === state.cpuColor && !state.pendingPromotion && !state.winner && !purgeChoice;
+  const onlineHumanTurnLabel = state.mode === "online" && onlineGame ? `turn: ${state.turn}` : "";
   const mateWinner = getCheckmateWinner(state);
   const mateResultText = mateWinner ? `${mateWinner === "white" ? "White" : "Black"} wins by checkmate` : null;
 
@@ -2243,7 +2244,7 @@ export default function App() {
                   : "Paranoia Chess"}
             </div>
 
-            {thinking && (
+            {(thinking || onlineHumanTurnLabel) && (
               <div
                 style={{
                   color: ACCENT,
@@ -2253,7 +2254,7 @@ export default function App() {
                   whiteSpace: "nowrap",
                 }}
               >
-                thinking...
+                {thinking ? "thinking..." : onlineHumanTurnLabel}
               </div>
             )}
           </div>
@@ -2609,9 +2610,9 @@ export default function App() {
                   )}
                 </div>
               )}
-              {thinking && (
+              {(thinking || onlineHumanTurnLabel) && (
                 <div className="text-xs" style={{ color: ACCENT, letterSpacing: "0.22em" }}>
-                  t h i n k i n g ...
+                  {thinking ? "t h i n k i n g ..." : onlineHumanTurnLabel}
                 </div>
               )}
             </div>

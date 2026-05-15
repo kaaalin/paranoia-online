@@ -71,34 +71,11 @@ const RANKS_DESC = [8, 7, 6, 5, 4, 3, 2, 1] as const;
 const PROMOTION_TYPES: Exclude<PieceType, "K" | "P">[] = ["Q", "R", "B", "N"];
 
 const GLYPHS: Record<Color, Record<PieceType, string>> = {
-  white: { K: "♚", Q: "♛", R: "♜", B: "♝", N: "♞", P: "♟" },
-  black: { K: "♚", Q: "♛", R: "♜", B: "♝", N: "♞", P: "♟" },
+  // The text-variation selector keeps iOS/Safari from rendering pawns as
+  // emoji-like black symbols, so CSS color/fill works consistently.
+  white: { K: "♚︎", Q: "♛︎", R: "♜︎", B: "♝︎", N: "♞︎", P: "♟︎" },
+  black: { K: "♚︎", Q: "♛︎", R: "♜︎", B: "♝︎", N: "♞︎", P: "♟︎" },
 };
-
-function PawnIcon({ color, size = "1em" }: { color: Color; size?: string }) {
-  const isWhite = color === "white";
-  const fill = isWhite ? "#ffffff" : "#000000";
-  const stroke = isWhite ? "#000000" : "#000000";
-
-  return (
-    <svg
-      viewBox="0 0 64 64"
-      width={size}
-      height={size}
-      aria-hidden="true"
-      focusable="false"
-      style={{ display: "block", overflow: "visible" }}
-    >
-      <g fill={fill} stroke={stroke} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-        <circle cx="32" cy="16" r="8.2" />
-        <path d="M24.5 27.5h15c1 8 5.6 13.2 11.5 17.8H13c5.9-4.6 10.5-9.8 11.5-17.8Z" />
-        <path d="M17.2 45.3h29.6c2.7 2.3 4.5 5.4 5.2 9.2H12c.7-3.8 2.5-6.9 5.2-9.2Z" />
-        <path d="M10 56h44" />
-      </g>
-    </svg>
-  );
-}
-
 
 
 const WOOD_LIGHT = "#dcc4a1";
@@ -1382,9 +1359,10 @@ function SquareView({
             WebkitTextStroke: piece.color === "white" ? "0.6px #000" : undefined,
             WebkitTextFillColor: piece.color === "white" ? "#ffffff" : "#000000",
             color: piece.color === "white" ? "#ffffff" : "#000000",
+            fontFamily: '"Times New Roman", "DejaVu Serif", "Noto Sans Symbols", "Segoe UI Symbol", serif',
           }}
         >
-          {piece.type === "P" ? <PawnIcon color={piece.color} size={pieceSize} /> : glyphSet[piece.color][piece.type]}
+          {glyphSet[piece.color][piece.type]}
         </div>
       )}
     </button>
@@ -1431,7 +1409,9 @@ function CapturedRow({
                 lineHeight: 1,
                 textShadow: displayColor === "white" ? "0 0 0.6px #000, 0 0 0.6px #000" : "none",
                 WebkitTextStroke: displayColor === "white" ? "0.6px #000" : undefined,
+                WebkitTextFillColor: displayColor === "white" ? "#ffffff" : "#000000",
                 color: displayColor === "white" ? "#ffffff" : "#000000",
+                fontFamily: '"Times New Roman", "DejaVu Serif", "Noto Sans Symbols", "Segoe UI Symbol", serif',
               }}
             >
               {GLYPHS[displayColor][p.type]}
@@ -1535,10 +1515,11 @@ function FifthColumnCard({
                 <div
                   style={{
                     fontSize: compact ? "3.2rem" : "5.2rem",
-                    fontFamily: "Segoe UI Symbol, Noto Sans Symbols, serif",
+                    fontFamily: '"Times New Roman", "DejaVu Serif", "Noto Sans Symbols", "Segoe UI Symbol", serif',
                     lineHeight: 1,
                     textShadow: displayPiece.color === "white" ? "0 0 1px #000, 0 0 1px #000" : "none",
                     WebkitTextStroke: displayPiece.color === "white" ? "1px #000" : undefined,
+                    WebkitTextFillColor: displayPiece.color === "white" ? "#ffffff" : "#000000",
                     color: displayPiece.color === "white" ? "#ffffff" : "#000000",
                     opacity: info.piece ? 1 : 0.5,
                   }}
@@ -2905,6 +2886,8 @@ export default function App() {
                       color: isWhite ? "#ffffff" : "#000000",
                       textShadow: isWhite ? "0 0 1px #000, 0 0 1px #000" : "none",
                       WebkitTextStroke: isWhite ? "0.8px #000" : undefined,
+                      WebkitTextFillColor: isWhite ? "#ffffff" : "#000000",
+                      fontFamily: '"Times New Roman", "DejaVu Serif", "Noto Sans Symbols", "Segoe UI Symbol", serif',
                     }}
                   >
                     {GLYPHS[state.pendingPromotion!.color][type]}

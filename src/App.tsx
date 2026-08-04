@@ -1690,7 +1690,7 @@ function SupportGameCard({ compact = false }: { compact?: boolean }) {
         style={{
           background: PANEL,
           border: `1px solid ${BORDER}`,
-          color: ACCENT,
+          color: TEXT,
         }}
       >
         <svg

@@ -2301,7 +2301,7 @@ export default function App() {
   return (
     <div className="min-h-screen text-[#0f172a]" style={{ background: PAGE_BG }}>
       <div className="max-w-7xl mx-auto p-3 md:p-6">
-        <div className="xl:hidden space-y-3">
+        <div className={`xl:hidden ${isIOS ? "space-y-2" : "space-y-3"}`}>
           <div className="rounded-3xl p-3" style={{ background: PANEL }}>
             <div className="flex items-center justify-between gap-3">
               <img
@@ -2426,8 +2426,8 @@ export default function App() {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div className="rounded-3xl p-2 border space-y-1.5" style={{ background: PANEL, borderColor: BORDER }}>
+          <div className={isIOS ? "grid grid-cols-2 gap-2" : "grid grid-cols-2 gap-3"}>
+            <div className={isIOS ? "rounded-3xl p-1.5 border space-y-1" : "rounded-3xl p-2 border space-y-1.5"} style={{ background: PANEL, borderColor: BORDER }}>
               <div className="text-base font-semibold">Mode</div>
               <label className="flex flex-col gap-0.5 text-[13px]">
                 <CustomDropdown<Mode>
@@ -2506,7 +2506,7 @@ export default function App() {
               )}
             </div>
 
-            <div className="rounded-3xl p-3 border space-y-3" style={{ background: PANEL, borderColor: BORDER }}>
+            <div className={isIOS ? "rounded-3xl p-2 border space-y-2" : "rounded-3xl p-3 border space-y-3"} style={{ background: PANEL, borderColor: BORDER }}>
               <div
                 className="text-base font-semibold"
                 style={{ transform: state.mode === "human" && state.turn === other(bottomColor) ? "rotate(180deg)" : "none" }}

@@ -1703,9 +1703,9 @@ function SupportGameCard({ compact = false }: { compact?: boolean }) {
             <linearGradient
               id={`coffee-icon-light-square-${compact ? "compact" : "regular"}`}
               x1="17"
-              y1="8"
-              x2="32"
-              y2="13"
+              y1="21"
+              x2="31"
+              y2="29"
               gradientUnits="userSpaceOnUse"
             >
               <stop stopColor="#ead8bb" />
@@ -1720,27 +1720,30 @@ function SupportGameCard({ compact = false }: { compact?: boolean }) {
             strokeLinejoin="round"
           />
           <path
+            d="M17.15 22h13.7l-0.55 7.2h-12.6L17.15 22Z"
+            fill={`url(#coffee-icon-light-square-${compact ? "compact" : "regular"})`}
+            stroke="currentColor"
+            strokeWidth="1.4"
+            strokeLinejoin="round"
+            opacity="0.96"
+          />
+          <path
             d="M14 12.5h20"
+            fill="none"
             stroke="currentColor"
             strokeWidth="3"
             strokeLinecap="round"
           />
           <path
             d="M17.5 8.5h13l1.8 4h-16.6l1.8-4Z"
-            fill={`url(#coffee-icon-light-square-${compact ? "compact" : "regular"})`}
+            fill="none"
             stroke="currentColor"
             strokeWidth="2"
             strokeLinejoin="round"
           />
           <path
-            d="M19 23h10M19.5 28.5h9"
-            stroke="currentColor"
-            strokeWidth="1.8"
-            strokeLinecap="round"
-            opacity="0.55"
-          />
-          <path
             d="M21 5.5c0-1.4 1.2-2.5 3-2.5s3 1.1 3 2.5"
+            fill="none"
             stroke="currentColor"
             strokeWidth="1.7"
             strokeLinecap="round"

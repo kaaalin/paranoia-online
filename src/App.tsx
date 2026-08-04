@@ -1668,87 +1668,21 @@ function CustomDropdown<T extends string>({
 }
 
 
-function SupportGameCard({
-  coffeeImgFailed,
-  isIosSafari,
-  onImageFailed,
-  compact = false,
-}: {
-  coffeeImgFailed: boolean;
-  isIosSafari: boolean;
-  onImageFailed: () => void;
-  compact?: boolean;
-}) {
-  const coffeeButtonSrc =
-    "https://img.buymeacoffee.com/button-api/?text=Support%20the%20game&slug=kalinyanev&button_colour=f4f1ec&font_colour=3a332c&font_family=Poppins&outline_colour=b07a52&coffee_colour=b07a52";
-
+function SupportGameCard() {
   return (
     <a
       href="https://www.buymeacoffee.com/kalinyanev"
       target="_blank"
       rel="noreferrer"
-      aria-label="Support Paranoia Chess on Buy Me a Coffee"
-      className={`${compact ? "max-w-[230px] rounded-2xl p-2" : "w-full rounded-3xl p-3"} group block border shadow-sm transition-all duration-150 hover:-translate-y-[1px] hover:shadow-md`}
-      style={{
-        background: PANEL,
-        borderColor: ACCENT,
-        color: TEXT,
-        textDecoration: "none",
-      }}
+      aria-label="Support the game on Buy Me a Coffee"
+      className="inline-flex items-center text-[12px] font-semibold tracking-[0.04em] transition-opacity duration-150 hover:opacity-75"
+      style={{ color: ACCENT, textDecoration: "none" }}
     >
-      <div className="flex items-center justify-between gap-2">
-        <div>
-          <div
-            className={compact ? "text-[12px] font-semibold" : "text-sm font-semibold"}
-            style={{ color: TEXT }}
-          >
-            Support Paranoia Chess
-          </div>
-          {!compact && (
-            <div className="mt-0.5 text-[11px] leading-4" style={{ color: TEXT, opacity: 0.72 }}>
-              Help keep the variant alive and online.
-            </div>
-          )}
-        </div>
-        <div
-          className={compact ? "h-7 w-7 text-[14px]" : "h-8 w-8 text-[15px]"}
-          style={{
-            borderRadius: "9999px",
-            background: PANEL_2,
-            border: `1px solid ${BORDER}`,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-          aria-hidden="true"
-        >
-          ☕
-        </div>
-      </div>
-
-      <div
-        className={`${compact ? "mt-1.5 px-2 py-1.5" : "mt-2 px-2 py-2"} rounded-2xl border text-center`}
-        style={{ background: PANEL_2, borderColor: BORDER }}
-      >
-        {!coffeeImgFailed && !isIosSafari ? (
-          <img
-            src={coffeeButtonSrc}
-            className="mx-auto block max-w-full"
-            alt="Support the game"
-            onError={onImageFailed}
-          />
-        ) : (
-          <span
-            className={`${compact ? "text-[11px]" : "text-[12px]"} block text-center font-bold`}
-            style={{ color: TEXT }}
-          >
-            Support the game ☕
-          </span>
-        )}
-      </div>
+      Support the game
     </a>
   );
 }
+
 
 export default function App() {
   useEffect(() => {
@@ -1762,8 +1696,6 @@ export default function App() {
   const isAndroid = /Android/i.test(navigator.userAgent);
   const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
   const isMobile = /iPhone|iPad|iPod|Android|Mobile/i.test(navigator.userAgent);
-  const isIosSafari = isIOS && /Safari/i.test(navigator.userAgent) && !/CriOS|FxiOS|EdgiOS/i.test(navigator.userAgent);
-  const [coffeeImgFailed, setCoffeeImgFailed] = useState(false);
   const [state, setState] = useState<State>(initialState);
   const [purgeChoice, setPurgeChoice] = useState<{ from: Square; to: Square; move: Move } | null>(null);
   const [peekConfirm, setPeekConfirm] = useState<Color | null>(null);
@@ -2555,12 +2487,7 @@ export default function App() {
           </div>
 
           <div className="flex justify-start">
-            <SupportGameCard
-              coffeeImgFailed={coffeeImgFailed}
-              isIosSafari={isIosSafari}
-              onImageFailed={() => setCoffeeImgFailed(true)}
-              compact
-            />
+            <SupportGameCard />
           </div>
 
           <details className="rounded-3xl p-3 border" style={{ background: PANEL, borderColor: BORDER }}>
@@ -2735,11 +2662,7 @@ export default function App() {
             </div>
 
             <div className="mt-auto">
-              <SupportGameCard
-                coffeeImgFailed={coffeeImgFailed}
-                isIosSafari={isIosSafari}
-                onImageFailed={() => setCoffeeImgFailed(true)}
-              />
+              <SupportGameCard />
             </div>
           </div>
 

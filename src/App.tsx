@@ -2300,9 +2300,9 @@ export default function App() {
 
   return (
     <div className="min-h-screen text-[#0f172a]" style={{ background: PAGE_BG }}>
-      <div className="max-w-7xl mx-auto p-3 md:p-6">
+      <div className="max-w-7xl mx-auto p-3 md:p-6" style={isIOS ? { paddingTop: "0.5rem" } : undefined}>
         <div className={`xl:hidden ${isIOS ? "space-y-2" : "space-y-3"}`}>
-          <div className="rounded-3xl p-3" style={{ background: PANEL }}>
+          <div className={isIOS ? "rounded-3xl p-2.5" : "rounded-3xl p-3"} style={{ background: PANEL }}>
             <div className="flex items-center justify-between gap-3">
               <img
                 src={LOGO_SRC}
@@ -2433,10 +2433,13 @@ export default function App() {
             </div>
           </div>
 
-          <div className={isIOS ? "grid grid-cols-2 gap-2" : "grid grid-cols-2 gap-3"}>
-            <div className={isIOS ? "rounded-3xl p-1.5 border space-y-1" : "rounded-3xl p-2 border space-y-1.5"} style={{ background: PANEL, borderColor: BORDER }}>
-              <div className="text-base font-semibold">Mode</div>
-              <label className="flex flex-col gap-0.5 text-[13px]">
+          <div
+            className={isIOS ? "grid grid-cols-2 gap-2 mx-auto w-full" : "grid grid-cols-2 gap-3"}
+            style={isIOS ? { maxWidth: "min(calc(100vw - 44px), 520px)" } : undefined}
+          >
+            <div className={isIOS ? "rounded-3xl py-1.5 pl-3 pr-1.5 border space-y-1" : "rounded-3xl p-2 border space-y-1.5"} style={{ background: PANEL, borderColor: BORDER }}>
+              <div className={isIOS ? "text-base font-semibold pl-1" : "text-base font-semibold"}>Mode</div>
+              <label className={isIOS ? "flex flex-col gap-0.5 text-[13px] pl-1" : "flex flex-col gap-0.5 text-[13px]"}>
                 <CustomDropdown<Mode>
                   compact
                   value={state.mode}
@@ -2449,7 +2452,7 @@ export default function App() {
                   onChange={(mode) => setState((s) => ({ ...s, mode }))}
                 />
               </label>
-              <label className="flex flex-col gap-0.5 text-[13px]">
+              <label className={isIOS ? "flex flex-col gap-0.5 text-[13px] pl-1" : "flex flex-col gap-0.5 text-[13px]"}>
                 <span>{state.mode === "human" ? "Bottom color" : state.mode === "online" ? "You play" : "Computer plays"}</span>
                 <CustomDropdown<Color>
                   compact
@@ -2465,7 +2468,7 @@ export default function App() {
                   }}
                 />
               </label>
-              <label className="flex flex-col gap-0.5 text-[13px]">
+              <label className={isIOS ? "flex flex-col gap-0.5 text-[13px] pl-1" : "flex flex-col gap-0.5 text-[13px]"}>
                 <span>Level</span>
                 <CustomDropdown<string>
                   compact
@@ -2485,7 +2488,7 @@ export default function App() {
                 />
               </label>
               {state.mode === "online" && (
-                <div className="mt-2 rounded-2xl p-2 text-[12px]" style={{ background: "#ede7df", border: `1px solid ${BORDER}`, color: TEXT }}>
+                <div className={isIOS ? "mt-1.5 rounded-2xl p-2 pl-3 text-[12px]" : "mt-2 rounded-2xl p-2 text-[12px]"} style={{ background: "#ede7df", border: `1px solid ${BORDER}`, color: TEXT }}>
                   {!onlineGame ? (
                     <button
                       type="button"
@@ -2513,9 +2516,9 @@ export default function App() {
               )}
             </div>
 
-            <div className={isIOS ? "rounded-3xl p-2 border space-y-2" : "rounded-3xl p-3 border space-y-3"} style={{ background: PANEL, borderColor: BORDER }}>
+            <div className={isIOS ? "rounded-3xl py-2 pl-3 pr-2 border space-y-2" : "rounded-3xl p-3 border space-y-3"} style={{ background: PANEL, borderColor: BORDER }}>
               <div
-                className="text-base font-semibold"
+                className={isIOS ? "text-base font-semibold pl-1" : "text-base font-semibold"}
                 style={{ transform: state.mode === "human" && state.turn === other(bottomColor) ? "rotate(180deg)" : "none" }}
               >Fifth column</div>
               {state.mode === "human" ? (

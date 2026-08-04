@@ -2313,22 +2313,27 @@ export default function App() {
                 <button onClick={reset} className="px-3 py-2 rounded-2xl font-semibold text-sm" style={{ background: "#ffffff", color: TEXT }}>
                   New
                 </button>
-                <a
-                  href="https://www.buymeacoffee.com/kalinyanev"
-                  target="_blank"
-                  rel="noreferrer"
-                  aria-label="Support the game"
-                  className="px-3 py-2 rounded-2xl font-semibold text-sm text-center"
-                  style={{ background: PANEL_2, color: TEXT, textDecoration: "none" }}
-                >
-                  Help
-                </a>
                 <button onClick={toggleFlip} className="px-3 py-2 rounded-2xl font-semibold text-sm" style={{ background: PANEL_2, color: TEXT }}>
                   Flip
                 </button>
                 <button onClick={() => setState((s) => ({ ...s, showRules: true }))} className="px-3 py-2 rounded-2xl font-semibold text-sm" style={{ background: ACCENT, color: "#ffffff" }}>
                   Info
                 </button>
+                <a
+                  href="https://www.buymeacoffee.com/kalinyanev"
+                  target="_blank"
+                  rel="noreferrer"
+                  aria-label="Support the game"
+                  className="px-3 py-2 rounded-2xl font-semibold text-sm text-center"
+                  style={{
+                    background: `linear-gradient(135deg, #ead8bb 0%, ${WOOD_LIGHT} 100%)`,
+                    border: `1px solid ${BORDER}`,
+                    color: TEXT,
+                    textDecoration: "none",
+                  }}
+                >
+                  Help
+                </a>
               </div>
             </div>
           </div>

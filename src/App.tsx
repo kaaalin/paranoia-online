@@ -1674,7 +1674,7 @@ function SupportGameCard({ compact = false }: { compact?: boolean }) {
       href="https://www.buymeacoffee.com/kalinyanev"
       target="_blank"
       rel="noreferrer"
-      aria-label="Support the game on Buy Me a Coffee"
+      aria-label="Support the game"
       className={`${compact ? "px-3 py-2 text-[12px]" : "px-3.5 py-2.5 text-[13px]"} inline-flex items-center gap-2.5 rounded-2xl font-semibold tracking-[0.04em] transition-all duration-150 hover:-translate-y-[1px] hover:shadow-md hover:opacity-95 focus:outline-none focus:ring-2`}
       style={{
         background: "#ede7df",
@@ -1735,7 +1735,7 @@ function SupportGameCard({ compact = false }: { compact?: boolean }) {
           />
         </svg>
       </span>
-      <span style={{ color: TEXT }}>Support the game</span>
+      <span style={{ color: TEXT }}>SUPPORT THE GAME</span>
     </a>
   );
 }

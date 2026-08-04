@@ -1714,9 +1714,16 @@ function SupportGameCard({ compact = false }: { compact?: boolean }) {
           </defs>
           <path
             d="M16.5 15.5h15l-1.8 24h-11.4l-1.8-24Z"
-            fill={ACCENT}
+            fill="none"
             stroke="currentColor"
             strokeWidth="2"
+            strokeLinejoin="round"
+          />
+          <path
+            d="M17.7 29.2h12.6l-0.78 10.3H18.48L17.7 29.2Z"
+            fill={ACCENT}
+            stroke="currentColor"
+            strokeWidth="1.4"
             strokeLinejoin="round"
           />
           <path

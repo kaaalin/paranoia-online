@@ -1699,9 +1699,22 @@ function SupportGameCard({ compact = false }: { compact?: boolean }) {
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
         >
+          <defs>
+            <linearGradient
+              id={`coffee-icon-light-square-${compact ? "compact" : "regular"}`}
+              x1="17"
+              y1="8"
+              x2="32"
+              y2="13"
+              gradientUnits="userSpaceOnUse"
+            >
+              <stop stopColor="#ead8bb" />
+              <stop offset="1" stopColor={WOOD_LIGHT} />
+            </linearGradient>
+          </defs>
           <path
             d="M16.5 15.5h15l-1.8 24h-11.4l-1.8-24Z"
-            fill="#f4f1ec"
+            fill={ACCENT}
             stroke="currentColor"
             strokeWidth="2"
             strokeLinejoin="round"
@@ -1714,7 +1727,7 @@ function SupportGameCard({ compact = false }: { compact?: boolean }) {
           />
           <path
             d="M17.5 8.5h13l1.8 4h-16.6l1.8-4Z"
-            fill="#e8e4de"
+            fill={`url(#coffee-icon-light-square-${compact ? "compact" : "regular"})`}
             stroke="currentColor"
             strokeWidth="2"
             strokeLinejoin="round"

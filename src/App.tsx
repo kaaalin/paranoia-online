@@ -1668,17 +1668,30 @@ function CustomDropdown<T extends string>({
 }
 
 
-function SupportGameCard() {
+function SupportGameCard({ compact = false }: { compact?: boolean }) {
   return (
     <a
       href="https://www.buymeacoffee.com/kalinyanev"
       target="_blank"
       rel="noreferrer"
       aria-label="Support the game on Buy Me a Coffee"
-      className="inline-flex items-center text-[12px] font-semibold tracking-[0.04em] transition-opacity duration-150 hover:opacity-75"
-      style={{ color: ACCENT, textDecoration: "none" }}
+      className={`${compact ? "text-[12px] px-3 py-2" : "text-[13px] px-3.5 py-2.5"} inline-flex items-center gap-2 rounded-full font-semibold tracking-[0.03em] transition-all duration-150 hover:-translate-y-[1px] hover:shadow-md focus:outline-none focus:ring-2`}
+      style={{
+        background: ACCENT,
+        border: `1px solid ${ACCENT}`,
+        color: "#ffffff",
+        textDecoration: "none",
+        boxShadow: "0 6px 16px rgba(176,122,82,0.28)",
+      }}
     >
-      Support the game
+      <span
+        aria-hidden="true"
+        className={`${compact ? "h-6 w-6" : "h-7 w-7"} inline-flex items-center justify-center rounded-full`}
+        style={{ background: "rgba(255,255,255,0.18)" }}
+      >
+        ☕
+      </span>
+      <span>Support the game</span>
     </a>
   );
 }
@@ -2487,7 +2500,7 @@ export default function App() {
           </div>
 
           <div className="flex justify-start">
-            <SupportGameCard />
+            <SupportGameCard compact />
           </div>
 
           <details className="rounded-3xl p-3 border" style={{ background: PANEL, borderColor: BORDER }}>

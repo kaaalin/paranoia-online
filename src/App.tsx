@@ -2378,7 +2378,14 @@ export default function App() {
             )}
           </div>
 
-          <div className="rounded-[28px] p-2 border shadow-xl mx-auto w-full max-w-[min(100vw-24px,560px)]" style={{ background: PANEL, borderColor: BORDER }}>
+          <div
+            className="rounded-[28px] p-2 border shadow-xl mx-auto w-full"
+            style={{
+              background: PANEL,
+              borderColor: BORDER,
+              maxWidth: isIOS ? "min(calc(100vw - 44px), 520px)" : "min(calc(100vw - 24px), 560px)",
+            }}
+          >
             <div className="grid grid-cols-[18px_1fr] grid-rows-[1fr_18px] gap-x-1 gap-y-1 items-stretch">
               <div className="grid grid-rows-8">
                 {boardOrderRanks.map((rank) => (

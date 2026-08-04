@@ -1735,7 +1735,7 @@ function SupportGameCard({ compact = false }: { compact?: boolean }) {
           />
         </svg>
       </span>
-      <span style={{ color: TEXT }}>SUPPORT THE GAME</span>
+      <span style={{ color: currentColor }}>Support the game</span>
     </a>
   );
 }

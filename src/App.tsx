@@ -2309,10 +2309,20 @@ export default function App() {
                 alt="Paranoia Chess logo"
                 className={thinking ? "w-11 h-11 object-contain animate-pulse shrink-0" : "w-11 h-11 object-contain shrink-0"}
               />
-              <div className="grid grid-cols-3 gap-2 flex-1">
+              <div className="grid grid-cols-4 gap-2 flex-1">
                 <button onClick={reset} className="px-3 py-2 rounded-2xl font-semibold text-sm" style={{ background: "#ffffff", color: TEXT }}>
                   New
                 </button>
+                <a
+                  href="https://www.buymeacoffee.com/kalinyanev"
+                  target="_blank"
+                  rel="noreferrer"
+                  aria-label="Support the game"
+                  className="px-3 py-2 rounded-2xl font-semibold text-sm text-center"
+                  style={{ background: PANEL_2, color: TEXT, textDecoration: "none" }}
+                >
+                  Help
+                </a>
                 <button onClick={toggleFlip} className="px-3 py-2 rounded-2xl font-semibold text-sm" style={{ background: PANEL_2, color: TEXT }}>
                   Flip
                 </button>
@@ -2566,9 +2576,6 @@ export default function App() {
             />
           </div>
 
-          <div className="flex justify-start">
-            <SupportGameCard compact />
-          </div>
 
           <details className="rounded-3xl p-3 border" style={{ background: PANEL, borderColor: BORDER }}>
             <summary className="cursor-pointer text-base font-semibold" style={{ color: TEXT }}>Variant summary</summary>

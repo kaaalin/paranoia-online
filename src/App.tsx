@@ -1675,23 +1675,67 @@ function SupportGameCard({ compact = false }: { compact?: boolean }) {
       target="_blank"
       rel="noreferrer"
       aria-label="Support the game on Buy Me a Coffee"
-      className={`${compact ? "text-[12px] px-3 py-2" : "text-[13px] px-3.5 py-2.5"} inline-flex items-center gap-2 rounded-full font-semibold tracking-[0.03em] transition-all duration-150 hover:-translate-y-[1px] hover:shadow-md focus:outline-none focus:ring-2`}
+      className={`${compact ? "px-3 py-2 text-[12px]" : "px-3.5 py-2.5 text-[13px]"} inline-flex items-center gap-2.5 rounded-2xl font-semibold tracking-[0.04em] transition-all duration-150 hover:-translate-y-[1px] hover:shadow-md hover:opacity-95 focus:outline-none focus:ring-2`}
       style={{
-        background: ACCENT,
-        border: `1px solid ${ACCENT}`,
-        color: "#ffffff",
+        background: "#ede7df",
+        border: `1px solid ${BORDER}`,
+        color: TEXT,
         textDecoration: "none",
-        boxShadow: "0 6px 16px rgba(176,122,82,0.28)",
+        boxShadow: "0 6px 16px rgba(0,0,0,0.05)",
       }}
     >
       <span
         aria-hidden="true"
-        className={`${compact ? "h-6 w-6" : "h-7 w-7"} inline-flex items-center justify-center rounded-full`}
-        style={{ background: "rgba(255,255,255,0.18)" }}
+        className={`${compact ? "h-9 w-9" : "h-10 w-10"} inline-flex shrink-0 items-center justify-center rounded-2xl`}
+        style={{
+          background: PANEL,
+          border: `1px solid ${BORDER}`,
+          color: ACCENT,
+        }}
       >
-        ☕
+        <svg
+          viewBox="0 0 48 48"
+          className={compact ? "h-7 w-7" : "h-8 w-8"}
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M16.5 15.5h15l-1.8 24h-11.4l-1.8-24Z"
+            fill="#f4f1ec"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinejoin="round"
+          />
+          <path
+            d="M14 12.5h20"
+            stroke="currentColor"
+            strokeWidth="3"
+            strokeLinecap="round"
+          />
+          <path
+            d="M17.5 8.5h13l1.8 4h-16.6l1.8-4Z"
+            fill="#e8e4de"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinejoin="round"
+          />
+          <path
+            d="M19 23h10M19.5 28.5h9"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            opacity="0.55"
+          />
+          <path
+            d="M21 5.5c0-1.4 1.2-2.5 3-2.5s3 1.1 3 2.5"
+            stroke="currentColor"
+            strokeWidth="1.7"
+            strokeLinecap="round"
+            opacity="0.75"
+          />
+        </svg>
       </span>
-      <span>Support the game</span>
+      <span style={{ color: TEXT }}>Support the game</span>
     </a>
   );
 }
